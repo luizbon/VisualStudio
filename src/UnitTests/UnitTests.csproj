@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" />
-  <Import Project="..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props" Condition="Exists('..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" />
+  <Import Project="..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -37,9 +36,6 @@
     <Reference Include="EntryExitDecoratorInterfaces, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\EntryExitDecorator.Fody.0.3.0\lib\net45\EntryExitDecoratorInterfaces.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="LibGit2Sharp">
-      <HintPath>..\..\lib\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Reactive.Testing, Version=2.2.5.0, Culture=neutral, PublicKeyToken=62aa029873c516b4, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Rx-Testing.2.2.5-custom\lib\net45\Microsoft.Reactive.Testing.dll</HintPath>
@@ -124,16 +120,17 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
     </Reference>
-    <Reference Include="xunit.assert, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\xunit.assert.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.assert.dll</HintPath>
+    <Reference Include="xunit.assert, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.assert.2.1.0\lib\dotnet\xunit.assert.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="xunit.core, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\xunit.extensibility.core.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
+    <Reference Include="xunit.core, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.extensibility.core.2.1.0\lib\dotnet\xunit.core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="xunit.execution.desktop, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\xunit.extensibility.execution.2.0.0\lib\net45\xunit.execution.desktop.dll</HintPath>
+    <Reference Include="xunit.execution.desktop, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\xunit.extensibility.execution.2.1.0\lib\net45\xunit.execution.desktop.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -144,8 +141,9 @@
     <Compile Include="GitHub.App\Caches\ImageCacheTests.cs" />
     <Compile Include="GitHub.App\Models\ModelServiceTests.cs" />
     <Compile Include="GitHub.App\Controllers\UIControllerTests.cs" />
+    <Compile Include="GitHub.App\Models\PullRequestModelTests.cs" />
     <Compile Include="GitHub.App\Models\RepositoryHostTests.cs" />
-    <Compile Include="GitHub.App\Models\ComparisonTests.cs" />
+    <Compile Include="GitHub.App\Models\RepositoryModelTests.cs" />
     <Compile Include="GitHub.App\Services\AvatarProviderTests.cs" />
     <Compile Include="GitHub.App\Services\GitClientTests.cs" />
     <Compile Include="GitHub.App\Services\RepositoryCloneServiceTests.cs" />
@@ -155,6 +153,7 @@
     <Compile Include="GitHub.App\ViewModels\RepositoryCreationViewModelTests.cs" />
     <Compile Include="GitHub.App\ViewModels\RepositoryPublishViewModelTests.cs" />
     <Compile Include="GitHub.Exports.Reactive\Caches\AccountCacheItemTests.cs" />
+    <Compile Include="GitHub.Exports\GitServiceTests.cs" />
     <Compile Include="GitHub.Exports\VSServicesTests.cs" />
     <Compile Include="GitHub.Extensions\UriExtensionTests.cs" />
     <Compile Include="GitHub.Primitives\UriStringTests.cs" />
@@ -214,6 +213,11 @@
       <Project>{252ce1c2-027a-4445-a3c2-e4d6c80a935a}</Project>
       <Name>Splat-Net45</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\submodules\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+      <Project>{EE6ED99F-CB12-4683-B055-D28FC7357A34}</Project>
+      <Name>LibGit2Sharp</Name>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\DesignTimeStyleHelper\DesignTimeStyleHelper.csproj">
       <Project>{b1f5c227-456f-437d-bd5f-4c11b7a8d1a0}</Project>
       <Name>DesignTimeStyleHelper</Name>
@@ -269,9 +273,8 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props'))" />
-    <Error Condition="!Exists('..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props'))" />
     <Error Condition="!Exists('..\..\packages\Fody.1.28.3\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Fody.1.28.3\build\Fody.targets'))" />
+    <Error Condition="!Exists('..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.runner.visualstudio.2.1.0\build\net20\xunit.runner.visualstudio.props'))" />
   </Target>
   <Import Project="..\..\packages\Fody.1.28.3\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.28.3\build\Fody.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

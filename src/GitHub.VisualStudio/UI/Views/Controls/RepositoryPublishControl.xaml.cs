@@ -8,14 +8,16 @@ using GitHub.UI;
 using GitHub.ViewModels;
 using NullGuard;
 using ReactiveUI;
+using System.ComponentModel.Composition;
 
 namespace GitHub.VisualStudio.UI.Views.Controls
 {
-    /// <summary>
-    /// Interaction logic for CloneRepoControl.xaml
-    /// </summary>
+    public class GenericRepositoryPublishControl : SimpleViewUserControl<IRepositoryPublishViewModel, RepositoryPublishControl>
+    { }
+    
     [ExportView(ViewType=UIViewType.Publish)]
-    public partial class RepositoryPublishControl : SimpleViewUserControl, IViewFor<IRepositoryPublishViewModel>, IView
+    [PartCreationPolicy(CreationPolicy.NonShared)]
+    public partial class RepositoryPublishControl : GenericRepositoryPublishControl
     {
         public RepositoryPublishControl()
         {
@@ -33,17 +35,10 @@ namespace GitHub.VisualStudio.UI.Views.Controls
                 d(this.Bind(ViewModel, vm => vm.KeepPrivate, v => v.makePrivate.IsChecked));
                 d(this.OneWayBind(ViewModel, vm => vm.CanKeepPrivate, v => v.makePrivate.IsEnabled));
 
-                //d(this.OneWayBind(ViewModel, vm => vm.ShowUpgradeToMicroPlanWarning, v => v.upgradeToMicroPlanWarning.Visibility));
-                //d(this.OneWayBind(ViewModel, vm => vm.ShowUpgradePlanWarning, v => v.upgradePlanWarning.Visibility));
-                d(this.OneWayBind(ViewModel, vm => vm.SelectedAccount.OwnedPrivateRepos, v => v.ownedPrivateReposText.Text));
-                d(this.OneWayBind(ViewModel, vm => vm.SelectedAccount.PrivateReposInPlan, v => v.privateReposInPlanText.Text));
-
                 d(this.OneWayBind(ViewModel, vm => vm.Accounts, v => v.accountsComboBox.ItemsSource));
                 d(this.Bind(ViewModel, vm => vm.SelectedAccount, v => v.accountsComboBox.SelectedItem));
 
                 d(this.BindCommand(ViewModel, vm => vm.PublishRepository, v => v.publishRepositoryButton));
-                //d(this.BindCommand(ViewModel, vm => vm.UpgradeAccountPlan, v => v.upgradeToMicroLink));
-                //d(this.BindCommand(ViewModel, vm => vm.UpgradeAccountPlan, v => v.upgradeAccountLink));
 
                 d(this.OneWayBind(ViewModel, vm => vm.IsPublishing, v => v.nameText.IsEnabled, x => x == false));
                 d(this.OneWayBind(ViewModel, vm => vm.IsPublishing, v => v.description.IsEnabled, x => x == false));
@@ -61,28 +56,6 @@ namespace GitHub.VisualStudio.UI.Views.Controls
                 if (IsVisible)
                     this.TryMoveFocus(FocusNavigationDirection.First).Subscribe();
             };
-        }
-
-        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
-           "ViewModel", typeof(IRepositoryPublishViewModel), typeof(RepositoryPublishControl), new PropertyMetadata(null));
-
-        object IViewFor.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryPublishViewModel)value; }
-        }
-
-        object IView.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryPublishViewModel)value; }
-        }
-
-        public IRepositoryPublishViewModel ViewModel
-        {
-            [return: AllowNull]
-            get { return (IRepositoryPublishViewModel)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); }
         }
     }
 }

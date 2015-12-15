@@ -14,12 +14,11 @@ namespace GitHub.ViewModels
     {
         [ImportingConstructor]
         public LoginControlViewModel(
-            IServiceProvider serviceProvider,
             IRepositoryHosts hosts,
             ILoginToGitHubViewModel loginToGitHubViewModel,
             ILoginToGitHubForEnterpriseViewModel loginToGitHubEnterpriseViewModel)
         {
-            Title = "Connect To GitHub";
+            Title = Resources.LoginTitle;
             RepositoryHosts = hosts;
             GitHubLogin = loginToGitHubViewModel;
             EnterpriseLogin = loginToGitHubEnterpriseViewModel;

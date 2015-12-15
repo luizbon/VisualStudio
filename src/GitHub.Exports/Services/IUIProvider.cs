@@ -2,14 +2,14 @@
 using System.ComponentModel.Composition.Hosting;
 using GitHub.Models;
 using GitHub.UI;
+using System.Windows.Controls;
 
 namespace GitHub.Services
 {
-    public interface IUIProvider
+    public interface IUIProvider : IServiceProvider
     {
         ExportProvider ExportProvider { get; }
         IServiceProvider GitServiceProvider { get; set; }
-        object GetService(Type t);
         T GetService<T>();
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         Ret GetService<T, Ret>() where Ret : class;
@@ -20,7 +20,7 @@ namespace GitHub.Services
         void AddService(Type t, object instance);
         void RemoveService(Type t);
 
-        IObservable<object> SetupUI(UIControllerFlow controllerFlow, IConnection connection);
+        IObservable<UserControl> SetupUI(UIControllerFlow controllerFlow, IConnection connection);
         void RunUI();
         void RunUI(UIControllerFlow controllerFlow, IConnection connection);
     }

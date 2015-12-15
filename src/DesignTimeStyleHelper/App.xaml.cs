@@ -11,6 +11,7 @@ using GitHub.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
 using Moq;
+using GitHub.Models;
 
 namespace DesignTimeStyleHelper
 {
@@ -42,7 +43,7 @@ namespace DesignTimeStyleHelper
         public IVisualStudioBrowser Browser;
 
         [Import]
-        public ExportFactoryProvider ExportFactoryProvider;
+        public IExportFactoryProvider ExportFactoryProvider;
 
         [Import]
         public IUIProvider UIProvider;
@@ -68,7 +69,7 @@ namespace DesignTimeStyleHelper
         {
             catalog = new AggregateCatalog(
                 new AssemblyCatalog(typeof(CustomServiceProvider).Assembly),
-                new AssemblyCatalog(typeof(Services).Assembly), // GitHub.VisualStudio
+                new AssemblyCatalog(typeof(Program).Assembly), // GitHub.VisualStudio
                 new AssemblyCatalog(typeof(GitHub.Api.ApiClient).Assembly), // GitHub.App
                 new AssemblyCatalog(typeof(GitHub.Api.SimpleApiClient).Assembly), // GitHub.Api
                 new AssemblyCatalog(typeof(Rothko.Environment).Assembly), // Rothko
@@ -109,12 +110,12 @@ namespace DesignTimeStyleHelper
             return new Mock<T>().Object;
         }
 
-        object Create(Type t)
+        static object Create(Type t)
         {
             var moq = typeof(Mock<>).MakeGenericType(t);
             var ctor = moq.GetConstructor(new Type[] { });
-            var m = ctor.Invoke(new object[] { }) as Mock;
-            return m.Object;
+            var m = ctor?.Invoke(new object[] { }) as Mock;
+            return m?.Object;
         }
 
         public ExportProvider DefaultExportProvider { get; set; }

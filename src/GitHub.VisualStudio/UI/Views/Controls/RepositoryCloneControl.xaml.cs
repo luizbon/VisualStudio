@@ -15,14 +15,19 @@ using GitHub.UI;
 using GitHub.ViewModels;
 using NullGuard;
 using ReactiveUI;
+using System.ComponentModel.Composition;
 
 namespace GitHub.VisualStudio.UI.Views.Controls
 {
+    public class GenericRepositoryCloneControl : SimpleViewUserControl<IRepositoryCloneViewModel, RepositoryCloneControl>
+    {}
+
     /// <summary>
     /// Interaction logic for CloneRepoControl.xaml
     /// </summary>
     [ExportView(ViewType=UIViewType.Clone)]
-    public partial class RepositoryCloneControl : SimpleViewUserControl, IViewFor<IRepositoryCloneViewModel>, IView
+    [PartCreationPolicy(CreationPolicy.NonShared)]
+    public partial class RepositoryCloneControl : GenericRepositoryCloneControl
     {
         public RepositoryCloneControl()
         {
@@ -33,7 +38,7 @@ namespace GitHub.VisualStudio.UI.Views.Controls
             this.WhenActivated(d =>
             {
                 d(this.OneWayBind(ViewModel, vm => vm.IsLoading, v => v.loadingProgressBar.Visibility));
-                d(this.OneWayBind(ViewModel, vm => vm.LoadingFailed, v => v.loadingFailedMessage.Visibility));
+                d(this.OneWayBind(ViewModel, vm => vm.LoadingFailed, v => v.loadingFailedPanel.Visibility));
                 d(this.OneWayBind(ViewModel, vm => vm.NoRepositoriesFound, v => v.noRepositoriesMessage.Visibility));
                 d(this.OneWayBind(ViewModel, vm => vm.FilteredRepositories, v => v.repositoryList.ItemsSource, CreateRepositoryListCollectionView));
                 d(this.Bind(ViewModel, vm => vm.SelectedRepository, v => v.repositoryList.SelectedItem));
@@ -52,28 +57,6 @@ namespace GitHub.VisualStudio.UI.Views.Controls
                 if (IsVisible)
                     this.TryMoveFocus(FocusNavigationDirection.First).Subscribe();
             };
-        }
-
-        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
-           "ViewModel", typeof(IRepositoryCloneViewModel), typeof(RepositoryCloneControl), new PropertyMetadata(null));
-
-        object IViewFor.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryCloneViewModel)value; }
-        }
-
-        object IView.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryCloneViewModel)value; }
-        }
-
-        public IRepositoryCloneViewModel ViewModel
-        {
-            [return: AllowNull]
-            get { return (IRepositoryCloneViewModel)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); }
         }
 
         static ListCollectionView CreateRepositoryListCollectionView(IEnumerable<IRepositoryModel> repositories)

@@ -1,19 +1,15 @@
 ﻿using System;
-using System.Linq;
 using EnvDTE;
 using EnvDTE80;
+using GitHub.Info;
+using GitHub.Primitives;
 using GitHub.Services;
 using LibGit2Sharp;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.TeamFoundation.Git.Extensibility;
-using GitHub.Models;
-using GitHub.Info;
-using GitHub.Extensions;
-using GitHub.Primitives;
+using Microsoft.VisualStudio.Shell;
+using System.ComponentModel.Composition.Hosting;
 
 namespace GitHub.VisualStudio
 {
@@ -44,22 +40,17 @@ namespace GitHub.VisualStudio
             return Package.GetGlobalService(typeof(T)) as Ret;
         }
 
-        public static IComponentModel ComponentModel
-        {
-            get { return GetGlobalService<SComponentModel, IComponentModel>(); }
-        }
+        public static IComponentModel ComponentModel => GetGlobalService<SComponentModel, IComponentModel>();
+        public static ExportProvider DefaultExportProvider => ComponentModel.DefaultExportProvider;
 
         public static IVsWebBrowsingService GetWebBrowsingService(this IServiceProvider provider)
         {
             return GetGlobalService<SVsWebBrowsingService, IVsWebBrowsingService>(provider);
         }
 
-        public static IVsOutputWindow OutputWindow
-        {
-            get { return GetGlobalService<SVsOutputWindow, IVsOutputWindow>(); }
-        }
+        public static IVsOutputWindow OutputWindow => GetGlobalService<SVsOutputWindow, IVsOutputWindow>();
 
-        static IVsOutputWindowPane outputWindowPane = null;
+        static IVsOutputWindowPane outputWindowPane;
         public static IVsOutputWindowPane OutputWindowPane
         {
             get
@@ -69,14 +60,14 @@ namespace GitHub.VisualStudio
                     // First make sure the output window is visible
                     var uiShell = GetGlobalService<SVsUIShell, IVsUIShell>();
                     // Get the frame of the output window
-                    Guid outputWindowGuid = new Guid("{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}");
-                    IVsWindowFrame outputWindowFrame = null;
+                    var outputWindowGuid = new Guid("{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}");
+                    IVsWindowFrame outputWindowFrame;
                     ErrorHandler.ThrowOnFailure(uiShell.FindToolWindow((uint)__VSCREATETOOLWIN.CTW_fForceCreate, ref outputWindowGuid, out outputWindowFrame));
                     // Show the output window
                     if (outputWindowFrame != null)
                         ErrorHandler.ThrowOnFailure(outputWindowFrame.Show());
 
-                    Guid paneGuid = new Guid("E37A42B1-C1AE-475C-9982-7F49FE61918D");
+                    var paneGuid = new Guid("E37A42B1-C1AE-475C-9982-7F49FE61918D");
                     ErrorHandler.ThrowOnFailure(OutputWindow.CreatePane(ref paneGuid, ApplicationInfo.ApplicationSafeName, 1 /*visible=true*/, 0 /*clearWithSolution=false*/));
                     ErrorHandler.ThrowOnFailure(OutputWindow.GetPane(ref paneGuid, out outputWindowPane));
                 }
@@ -85,15 +76,10 @@ namespace GitHub.VisualStudio
             }
         }
 
-        public static DTE Dte
-        {
-            get { return GetGlobalService<DTE, DTE>(); }
-        }
+        public static DTE Dte => GetGlobalService<DTE, DTE>();
 
-        public static DTE2 Dte2
-        {
-            get { return Dte as DTE2; }
-        }
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        public static DTE2 Dte2 => Dte as DTE2;
 
         public static IVsActivityLog GetActivityLog(this IServiceProvider provider)
         {
@@ -105,18 +91,6 @@ namespace GitHub.VisualStudio
             return GetGlobalService<SVsSolution, IVsSolution>(provider);
         }
 
-        public static T GetExportedValue<T>(this IServiceProvider serviceProvider)
-        {
-            var ui = serviceProvider as IUIProvider;
-            if (ui != null)
-                return ui.GetService<T>();
-            else
-            {
-                var componentModel = (IComponentModel)serviceProvider.GetService(typeof(SComponentModel));
-                return componentModel.DefaultExportProvider.GetExportedValue<T>();
-            }
-        }
-
         public static UriString GetRepoUrlFromSolution(IVsSolution solution)
         {
             string solutionDir, solutionFile, userFile;
@@ -124,61 +98,7 @@ namespace GitHub.VisualStudio
                 return null;
             if (solutionDir == null)
                 return null;
-            var repoPath = Repository.Discover(solutionDir);
-            if (repoPath == null)
-                return null;
-            using (var repo = new Repository(repoPath))
-            {
-                return repo.GetUri();
-            }
-        }
-
-        public static Repository GetRepoFromSolution(this IVsSolution solution)
-        {
-            string solutionDir, solutionFile, userFile;
-            if (!ErrorHandler.Succeeded(solution.GetSolutionInfo(out solutionDir, out solutionFile, out userFile)))
-                return null;
-            if (solutionDir == null)
-                return null;
-            var repoPath = Repository.Discover(solutionDir);
-            if (repoPath == null)
-                return null;
-            return new Repository(repoPath);
-        }
-
-        public static UriString GetUri(this Repository repo)
-        {
-            return UriString.ToUriString(GetUriFromRepository(repo)?.ToRepositoryUrl());
-        }
-
-        static UriString GetUriFromRepository(Repository repo)
-        {
-            return repo
-                ?.Network
-                .Remotes
-                .FirstOrDefault(x => x.Name.Equals("origin", StringComparison.Ordinal))
-                ?.Url;
-        }
-
-        public static Repository GetRepoFromIGit(this IGitRepositoryInfo repoInfo)
-        {
-            var repoPath = Repository.Discover(repoInfo.RepositoryPath);
-            if (repoPath == null)
-                return null;
-            return new Repository(repoPath);
-        }
-
-        public static Repository GetRepoFromPath(string path)
-        {
-            var repoPath = Repository.Discover(path);
-            if (repoPath == null)
-                return null;
-            return new Repository(repoPath);
-        }
-
-        public static UriString GetUriFromRepository(this IGitRepositoryInfo repoInfo)
-        {
-            return repoInfo.GetRepoFromIGit()?.GetUri();
+            return GitService.GitServiceHelper.GetUri(solutionDir);
         }
     }
 }

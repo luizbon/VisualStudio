@@ -52,9 +52,6 @@
     <Reference Include="envdte80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>false</EmbedInteropTypes>
     </Reference>
-    <Reference Include="LibGit2Sharp, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\lib\LibGit2Sharp.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.TeamFoundation.Controls, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\lib\\Microsoft.TeamFoundation.Controls.dll</HintPath>
       <Private>False</Private>
@@ -99,8 +96,10 @@
     <None Include="..\..\script\Key.snk" Condition="$(Buildtype) == 'Internal'">
       <Link>Key.snk</Link>
     </None>
+    <Compile Include="Collections\ICopyable.cs" />
     <Compile Include="Helpers\INotifyPropertySource.cs" />
-    <Compile Include="Helpers\PropertyNotifierExtensions.cs" />
+    <Compile Include="Extensions\PropertyNotifierExtensions.cs" />
+    <Compile Include="Extensions\SimpleRepositoryModelExtensions.cs" />
     <Compile Include="Info\ApplicationInfo.cs" />
     <Compile Include="Models\IAccount.cs" />
     <Compile Include="Models\IConnectionManager.cs" />
@@ -109,6 +108,8 @@
     <Compile Include="Models\SimpleRepositoryModel.cs" />
     <Compile Include="Helpers\NotificationAwareObject.cs" />
     <Compile Include="Services\Connection.cs" />
+    <Compile Include="Services\GitService.cs" />
+    <Compile Include="Services\IGitService.cs" />
     <Compile Include="Services\ITeamExplorerServiceHolder.cs" />
     <Compile Include="Services\Logger.cs" />
     <Compile Include="Services\Services.cs" />
@@ -121,7 +122,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authentication\AuthenticationResultExtensions.cs" />
-    <Compile Include="Services\VSExtensions.cs" />
+    <Compile Include="Extensions\VSExtensions.cs" />
+    <Compile Include="ViewModels\IServiceProviderAware.cs" />
     <Compile Include="UI\IView.cs" />
     <Compile Include="UI\Octicon.cs" />
     <Compile Include="ViewModels\IGitHubConnectSection.cs" />
@@ -142,15 +144,22 @@
     <Compile Include="Services\IUIProvider.cs" />
     <Compile Include="Services\IWikiProbe.cs" />
     <Compile Include="Services\WikiProbe.cs" />
+    <Compile Include="ViewModels\IGitHubPaneViewModel.cs" />
     <Compile Include="ViewModels\ILoginViewModel.cs" />
     <Compile Include="Primitives\HostAddress.cs" />
     <Compile Include="UI\IUIController.cs" />
     <Compile Include="ViewModels\IViewModel.cs" />
+    <Compile Include="Models\IPullRequestModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\submodules\octokit.net\Octokit\Octokit.csproj">
       <Project>{08dd4305-7787-4823-a53f-4d0f725a07f3}</Project>
       <Name>Octokit</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\submodules\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+      <Project>{EE6ED99F-CB12-4683-B055-D28FC7357A34}</Project>
+      <Name>LibGit2Sharp</Name>
+      <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\GitHub.Extensions\GitHub.Extensions.csproj">
       <Project>{6afe2e2d-6db0-4430-a2ea-f5f5388d2f78}</Project>

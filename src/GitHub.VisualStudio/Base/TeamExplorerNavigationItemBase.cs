@@ -8,12 +8,12 @@ using GitHub.UI;
 using GitHub.VisualStudio.Helpers;
 using Microsoft.TeamFoundation.Controls;
 using Microsoft.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio.TeamFoundation.Git.Extensibility;
 using NullGuard;
+using GitHub.Models;
 
 namespace GitHub.VisualStudio.Base
 {
-    public class TeamExplorerNavigationItemBase : TeamExplorerItemBase, ITeamExplorerNavigationItem2, INotifyPropertySource
+    public class TeamExplorerNavigationItemBase : TeamExplorerItemBase, ITeamExplorerNavigationItem2
     {
         readonly Octicon octicon;
 
@@ -29,6 +29,7 @@ namespace GitHub.VisualStudio.Base
             VSColorTheme.ThemeChanged += _ =>
             {
                 OnThemeChanged();
+                Invalidate();
             };
 
             holder.Subscribe(this, UpdateRepo);
@@ -56,7 +57,7 @@ namespace GitHub.VisualStudio.Base
             }
         }
 
-        void UpdateRepo(IGitRepositoryInfo repo)
+        void UpdateRepo(ISimpleRepositoryModel repo)
         {
             ActiveRepo = repo;
             RepoChanged();

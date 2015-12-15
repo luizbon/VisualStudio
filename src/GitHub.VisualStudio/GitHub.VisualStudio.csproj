@@ -8,7 +8,7 @@
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
     <BuildType Condition="Exists('..\..\script\ApiClientConfiguration.cs')">Internal</BuildType>
-    <ApplicationVersion>1.0.14.0</ApplicationVersion>
+    <ApplicationVersion>1.0.16.1</ApplicationVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -206,17 +206,15 @@
     <None Include="..\..\script\Key.snk" Condition="$(Buildtype) == 'Internal'">
       <Link>Key.snk</Link>
     </None>
+    <Compile Include="..\common\SolutionInfo.cs">
+      <Link>Properties\SolutionInfo.cs</Link>
+    </Compile>
     <Compile Include="Base\TeamExplorerGitRepoInfo.cs" />
     <Compile Include="Base\TeamExplorerInvitationBase.cs" />
     <Compile Include="Base\TeamExplorerServiceHolder.cs" />
     <Compile Include="Converters\CountToVisibilityConverter.cs" />
     <Compile Include="Helpers\SharedDictionaryManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\common\SolutionInfo.cs">
-      <Link>Properties\SolutionInfo.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Base\TeamExplorerBase.cs" />
     <Compile Include="Base\TeamExplorerItemBase.cs" />
     <Compile Include="Base\TeamExplorerNavigationItemBase.cs" />
@@ -249,8 +247,11 @@
     <Compile Include="TeamExplorer\Home\IssuesNavigationItem.cs" />
     <Compile Include="TeamExplorer\Home\WikiNavigationItem.cs" />
     <Compile Include="TeamExplorer\Home\PulseNavigationItem.cs" />
+    <Compile Include="TeamExplorer\Sync\EnsureLoggedInSectionSync.cs" />
     <Compile Include="TeamExplorer\Sync\GitHubPublishSection.cs" />
+    <Compile Include="Base\EnsureLoggedInSection.cs" />
     <Compile Include="UI\DrawingExtensions.cs" />
+    <Compile Include="UI\GitHubPane.cs" />
     <Compile Include="UI\Views\Controls\RepositoryCloneControl.xaml.cs">
       <DependentUpon>RepositoryCloneControl.xaml</DependentUpon>
     </Compile>
@@ -275,15 +276,18 @@
     <Compile Include="UI\Views\Controls\TwoFactorControl.xaml.cs">
       <DependentUpon>TwoFactorControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Views\GitHubPaneView.xaml.cs">
+      <DependentUpon>GitHubPaneView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\WindowController.xaml.cs">
       <DependentUpon>WindowController.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
@@ -297,11 +301,11 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\preview_200x200.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\logo_32x32%402x.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="GitHub.VisualStudio.imagemanifest">
@@ -318,6 +322,7 @@
   <ItemGroup>
     <VSCTCompile Include="GitHub.VisualStudio.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
@@ -333,6 +338,22 @@
     <Resource Include="Resources\default_user_avatar.png" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Resources\icons\refresh.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\icons\arrow_right.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\icons\arrow_left.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\icons\git_pull_request.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Resources\icons\mark_github.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -375,6 +396,10 @@
       <SubType>
       </SubType>
     </Page>
+    <Page Include="UI\Views\GitHubPaneView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\WindowController.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -393,6 +418,12 @@
       <Private>False</Private>
       <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup;GetCopyToOutputDirectoryItems;DebugSymbolsProjectOutputGroup;</IncludeOutputGroupsInVSIX>
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup;</IncludeOutputGroupsInVSIXLocalOnly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\submodules\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+      <Project>{ee6ed99f-cb12-4683-b055-d28fc7357a34}</Project>
+      <Name>LibGit2Sharp</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bGetCopyToOutputDirectoryItems%3bDebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
     <ProjectReference Include="..\..\submodules\octokit.net\Octokit.Reactive\Octokit.Reactive.csproj">
       <Project>{674b69b8-0780-4d54-ae2b-c15821fa51cb}</Project>
@@ -498,7 +529,6 @@
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup;</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>

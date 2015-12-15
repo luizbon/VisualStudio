@@ -11,14 +11,19 @@ using GitHub.UserErrors;
 using GitHub.ViewModels;
 using NullGuard;
 using ReactiveUI;
+using System.ComponentModel.Composition;
 
 namespace GitHub.VisualStudio.UI.Views.Controls
 {
+    public class GenericRepositoryCreationControl : SimpleViewUserControl<IRepositoryCreationViewModel, RepositoryCreationControl>
+    { }
+
     /// <summary>
     /// Interaction logic for CloneRepoControl.xaml
     /// </summary>
     [ExportView(ViewType=UIViewType.Create)]
-    public partial class RepositoryCreationControl : SimpleViewUserControl, IViewFor<IRepositoryCreationViewModel>, IView
+    [PartCreationPolicy(CreationPolicy.NonShared)]
+    public partial class RepositoryCreationControl : GenericRepositoryCreationControl
     {
         public RepositoryCreationControl()
         {
@@ -50,18 +55,11 @@ namespace GitHub.VisualStudio.UI.Views.Controls
                 d(this.Bind(ViewModel, vm => vm.KeepPrivate, v => v.makePrivate.IsChecked));
                 d(this.OneWayBind(ViewModel, vm => vm.CanKeepPrivate, v => v.makePrivate.IsEnabled));
 
-                //d(this.OneWayBind(ViewModel, vm => vm.ShowUpgradeToMicroPlanWarning, v => v.upgradeToMicroPlanWarning.Visibility));
-                //d(this.OneWayBind(ViewModel, vm => vm.ShowUpgradePlanWarning, v => v.upgradePlanWarning.Visibility));
-                d(this.OneWayBind(ViewModel, vm => vm.SelectedAccount.OwnedPrivateRepos, v => v.ownedPrivateReposText.Text));
-                d(this.OneWayBind(ViewModel, vm => vm.SelectedAccount.PrivateReposInPlan, v => v.privateReposInPlanText.Text));
-
                 d(this.OneWayBind(ViewModel, vm => vm.Accounts, v => v.accountsComboBox.ItemsSource));
                 d(this.Bind(ViewModel, vm => vm.SelectedAccount, v => v.accountsComboBox.SelectedItem));
 
                 d(this.BindCommand(ViewModel, vm => vm.CreateRepository, v => v.createRepositoryButton));
                 d(this.OneWayBind(ViewModel, vm => vm.IsCreating, v => v.createRepositoryButton.ShowSpinner));
-                //d(this.BindCommand(ViewModel, vm => vm.UpgradeAccountPlan, v => v.upgradeToMicroLink));
-                //d(this.BindCommand(ViewModel, vm => vm.UpgradeAccountPlan, v => v.upgradeAccountLink));
 
                 d(this.BindCommand(ViewModel, vm => vm.BrowseForDirectory, v => v.browsePathButton));
 
@@ -78,29 +76,6 @@ namespace GitHub.VisualStudio.UI.Views.Controls
                 if (IsVisible)
                     this.TryMoveFocus(FocusNavigationDirection.First).Subscribe();
             };
-        }
-
-        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register(
-           "ViewModel", typeof(IRepositoryCreationViewModel), typeof(RepositoryCreationControl), new PropertyMetadata(null));
-
-        object IViewFor.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryCreationViewModel)value; }
-        }
-
-        object IView.ViewModel
-        {
-            get { return ViewModel; }
-            set { ViewModel = (IRepositoryCreationViewModel)value; }
-        }
-
-        public IRepositoryCreationViewModel ViewModel
-        {
-            [return: AllowNull]
-            get
-            { return (IRepositoryCreationViewModel)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); }
         }
     }
 }

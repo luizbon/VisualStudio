@@ -1,17 +1,19 @@
-﻿using Microsoft.TeamFoundation.Git.Controls.Extensibility;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Linq;
+using System.Windows.Input;
 using GitHub.Extensions;
-using Microsoft.Win32;
-using Microsoft.VisualStudio.TeamFoundation.Git.Extensibility;
+using GitHub.Models;
 using GitHub.VisualStudio;
 using Microsoft.TeamFoundation.Controls;
+using Microsoft.TeamFoundation.Git.Controls.Extensibility;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
-using System.Collections.Generic;
-using GitHub.Models;
+using Microsoft.VisualStudio.TeamFoundation.Git.Extensibility;
+using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace GitHub.Services
 {
@@ -20,11 +22,12 @@ namespace GitHub.Services
         string GetLocalClonePathFromGitProvider();
         void Clone(string cloneUrl, string clonePath, bool recurseSubmodules);
         string GetActiveRepoPath();
-        LibGit2Sharp.Repository GetActiveRepo();
+        LibGit2Sharp.IRepository GetActiveRepo();
         IEnumerable<ISimpleRepositoryModel> GetKnownRepositories();
         string SetDefaultProjectPath(string path);
 
         void ShowMessage(string message);
+        void ShowMessage(string message, ICommand command);
         void ShowWarning(string message);
         void ShowError(string message);
         void ClearNotifications();
@@ -41,7 +44,7 @@ namespace GitHub.Services
         readonly IServiceProvider serviceProvider;
 
         [ImportingConstructor]
-        public VSServices(IServiceProvider serviceProvider)
+        public VSServices(IUIProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
@@ -71,18 +74,18 @@ namespace GitHub.Services
             gitExt.Clone(cloneUrl, clonePath, recurseSubmodules ? CloneOptions.RecurseSubmodule : CloneOptions.None);
         }
 
-        public LibGit2Sharp.Repository GetActiveRepo()
+        public LibGit2Sharp.IRepository GetActiveRepo()
         {
             var gitExt = serviceProvider.GetService<IGitExt>();
-            if (gitExt.ActiveRepositories.Count > 0)
-                return gitExt.ActiveRepositories.First().GetRepoFromIGit();
-            return serviceProvider.GetSolution().GetRepoFromSolution();
+            return gitExt.ActiveRepositories.Any()
+                ? serviceProvider.GetService<IGitService>().GetRepo(gitExt.ActiveRepositories.First())
+                : serviceProvider.GetSolution().GetRepoFromSolution();
         }
 
         public string GetActiveRepoPath()
         {
             var gitExt = serviceProvider.GetService<IGitExt>();
-            if (gitExt.ActiveRepositories.Count > 0)
+            if (gitExt.ActiveRepositories.Any())
                 return gitExt.ActiveRepositories.First().RepositoryPath;
             var repo = serviceProvider.GetSolution().GetRepoFromSolution();
             return repo?.Info?.Path ?? string.Empty;
@@ -115,16 +118,18 @@ namespace GitHub.Services
                 {
                     using (var subkey = key.OpenSubKey(x))
                     {
-                        var path = subkey?.GetValue("Path") as string;
-                        if (path != null)
+                        try
                         {
-                            var uri = VisualStudio.Services.GetRepoFromPath(path)?.GetUri();
-                            var name = uri?.NameWithOwner;
-                            if (name != null)
-                                return new SimpleRepositoryModel(name, uri, path);
+                            var path = subkey?.GetValue("Path") as string;
+                            if (path != null)
+                                return new SimpleRepositoryModel(path);
                         }
+                        catch (Exception ex)
+                        {
+                            VsOutputLogger.WriteLine(string.Format(CultureInfo.CurrentCulture, "Error loading the repository from the registry '{0}'", ex));
+                        }
+                        return null;
                     }
-                    return null;
                 })
                 .Where(x => x != null)
                 .ToList();
@@ -139,14 +144,51 @@ namespace GitHub.Services
             }
         }
 
-        const string PathsKey = @"Software\Microsoft\VisualStudio\14.0\NewProjectDialog\MRUSettingsLocalProjectLocationEntries";
+        const string NewProjectDialogKeyPath = @"Software\Microsoft\VisualStudio\14.0\NewProjectDialog";
+        const string MRUKeyPath = "MRUSettingsLocalProjectLocationEntries";
         public string SetDefaultProjectPath(string path)
         {
-            string old;
-            using (var key = Registry.CurrentUser.OpenSubKey(PathsKey, true))
+            var old = String.Empty;
+            try
             {
-                old = (string)key?.GetValue("Value0", string.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
-                key?.SetValue("Value0", path, RegistryValueKind.String);
+                var newProjectKey = Registry.CurrentUser.OpenSubKey(NewProjectDialogKeyPath, true) ??
+                                    Registry.CurrentUser.CreateSubKey(NewProjectDialogKeyPath);
+                Debug.Assert(newProjectKey != null, string.Format(CultureInfo.CurrentCulture, "Could not open or create registry key '{0}'", NewProjectDialogKeyPath));
+
+                using (newProjectKey)
+                {
+                    var mruKey = newProjectKey.OpenSubKey(MRUKeyPath, true) ??
+                                 Registry.CurrentUser.CreateSubKey(MRUKeyPath);
+                    Debug.Assert(mruKey != null, string.Format(CultureInfo.CurrentCulture, "Could not open or create registry key '{0}'", MRUKeyPath));
+
+                    using (mruKey)
+                    {
+                        // is this already the default path? bail
+                        old = (string)mruKey.GetValue("Value0", string.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
+                        if (String.Equals(path.TrimEnd('\\'), old.TrimEnd('\\'), StringComparison.CurrentCultureIgnoreCase))
+                            return old;
+
+                        // grab the existing list of recent paths, throwing away the last one
+                        var numEntries = (int)mruKey.GetValue("MaximumEntries", 5);
+                        var entries = new List<string>(numEntries);
+                        for (int i = 0; i < numEntries - 1; i++)
+                        {
+                            var val = (string)mruKey.GetValue("Value" + i, String.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
+                            if (!String.IsNullOrEmpty(val))
+                                entries.Add(val);
+                        }
+
+                        newProjectKey.SetValue("LastUsedNewProjectPath", path);
+                        mruKey.SetValue("Value0", path);
+                        // bump list of recent paths one entry down
+                        for (int i = 0; i < entries.Count; i++)
+                            mruKey.SetValue("Value" + (i + 1), entries[i]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                VsOutputLogger.WriteLine(string.Format(CultureInfo.CurrentCulture, "Error setting the create project path in the registry '{0}'", ex));
             }
             return old;
         }
@@ -154,34 +196,36 @@ namespace GitHub.Services
         public void ShowMessage(string message)
         {
             var manager = serviceProvider.TryGetService<ITeamExplorer>() as ITeamExplorerNotificationManager;
-            if (manager != null)
-                manager.ShowNotification(message, NotificationType.Information, NotificationFlags.None, null, default(Guid));
+            manager?.ShowNotification(message, NotificationType.Information, NotificationFlags.None, null, default(Guid));
+        }
+
+        public void ShowMessage(string message, ICommand command)
+        {
+            var manager = serviceProvider.TryGetService<ITeamExplorer>() as ITeamExplorerNotificationManager;
+            manager?.ShowNotification(message, NotificationType.Information, NotificationFlags.None, command, default(Guid));
         }
 
         public void ShowWarning(string message)
         {
             var manager = serviceProvider.TryGetService<ITeamExplorer>() as ITeamExplorerNotificationManager;
-            if (manager != null)
-                manager.ShowNotification(message, NotificationType.Warning, NotificationFlags.None, null, default(Guid));
+            manager?.ShowNotification(message, NotificationType.Warning, NotificationFlags.None, null, default(Guid));
         }
 
         public void ShowError(string message)
         {
             var manager = serviceProvider.TryGetService<ITeamExplorer>() as ITeamExplorerNotificationManager;
-            if (manager != null)
-                manager.ShowNotification(message, NotificationType.Error, NotificationFlags.None, null, default(Guid));
+            manager?.ShowNotification(message, NotificationType.Error, NotificationFlags.None, null, default(Guid));
         }
 
         public void ClearNotifications()
         {
             var manager = serviceProvider.TryGetService<ITeamExplorer>() as ITeamExplorerNotificationManager;
-            if (manager != null)
-                manager.ClearNotifications();
-		}
+            manager?.ClearNotifications();
+        }
 
         public void ActivityLogMessage(string message)
         {
-            var log = VisualStudio.Services.GetActivityLog(serviceProvider);
+            var log = serviceProvider.GetActivityLog();
             if (log != null)
             {
                 if (!ErrorHandler.Succeeded(log.LogEntry((UInt32)__ACTIVITYLOG_ENTRYTYPE.ALE_INFORMATION,
@@ -192,7 +236,7 @@ namespace GitHub.Services
 
         public void ActivityLogError(string message)
         {
-            var log = VisualStudio.Services.GetActivityLog(serviceProvider);
+            var log = serviceProvider.GetActivityLog();
             if (log != null)
             {
 
@@ -204,7 +248,7 @@ namespace GitHub.Services
 
         public void ActivityLogWarning(string message)
         {
-            var log = VisualStudio.Services.GetActivityLog(serviceProvider);
+            var log = serviceProvider.GetActivityLog();
             if (log != null)
             {
                 if (!ErrorHandler.Succeeded(log.LogEntry((UInt32)__ACTIVITYLOG_ENTRYTYPE.ALE_WARNING,

@@ -17,13 +17,13 @@ using NullGuard;
 using NLog;
 using System.Reactive.Linq;
 using GitHub.Infrastructure;
+using System.Windows.Controls;
 
 namespace GitHub.VisualStudio
 {
     [Export(typeof(IUIProvider))]
-    [Export(typeof(IServiceProvider))]
     [PartCreationPolicy(CreationPolicy.Shared)]
-    public class UIProvider : IServiceProvider, IUIProvider, IDisposable
+    public class UIProvider : IUIProvider, IDisposable
     {
         static readonly Logger log = LogManager.GetCurrentClassLogger();
         CompositeDisposable disposables = new CompositeDisposable();
@@ -184,12 +184,12 @@ namespace GitHub.VisualStudio
         }
 
         UI.WindowController windowController;
-        public IObservable<object> SetupUI(UIControllerFlow controllerFlow, [AllowNull] IConnection connection)
+        public IObservable<UserControl> SetupUI(UIControllerFlow controllerFlow, [AllowNull] IConnection connection)
         {
             if (!Initialized)
             {
                 log.Error("ExportProvider is not initialized, cannot setup UI.");
-                return Observable.Return<object>(null);
+                return Observable.Return<UserControl>(null);
             }
 
             StopUI();

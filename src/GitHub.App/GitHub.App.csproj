@@ -51,9 +51,6 @@
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\lib\LibGit2Sharp.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.TeamFoundation.Git.Controls, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\lib\Microsoft.TeamFoundation.Git.Controls.dll</HintPath>
       <Private>False</Private>
@@ -123,13 +120,23 @@
     <None Include="..\..\script\Key.snk" Condition="$(Buildtype) == 'Internal'">
       <Link>Key.snk</Link>
     </None>
+    <Compile Include="Caches\CacheIndex.cs" />
+    <Compile Include="Caches\CacheItem.cs" />
     <Compile Include="Caches\ImageCache.cs" />
     <Compile Include="Extensions\AkavacheExtensions.cs" />
     <Compile Include="Extensions\EnvironmentExtensions.cs" />
-    <Compile Include="Extensions\RepositoryModelExtensions.cs" />
     <Compile Include="Extensions\ValidationExtensions.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Infrastructure\LoggingConfiguration.cs" />
+    <Compile Include="Models\PullRequestModel.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Services\AvatarProvider.cs" />
+    <Compile Include="Services\GitHubCredentialProvider.cs" />
+    <Compile Include="Services\IGitHubCredentialProvider.cs" />
     <Compile Include="Services\ImageDownloader.cs" />
     <Compile Include="Services\GitClient.cs" />
     <Compile Include="Services\ModelService.cs" />
@@ -155,7 +162,6 @@
     <Compile Include="Caches\LoginCache.cs" />
     <Compile Include="Caches\SharedCache.cs" />
     <Compile Include="Factories\SqlitePersistentBlobCacheFactory.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Info\GitHubUrls.cs" />
     <Compile Include="Infrastructure\ExportWrappers.cs" />
     <Compile Include="Models\Account.cs" />
@@ -233,6 +239,11 @@
       <Project>{252ce1c2-027a-4445-a3c2-e4d6c80a935a}</Project>
       <Name>Splat-Net45</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\submodules\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+      <Project>{EE6ED99F-CB12-4683-B055-D28FC7357A34}</Project>
+      <Name>LibGit2Sharp</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\CredentialManagement\CredentialManagement.csproj">
       <Project>{41a47c5b-c606-45b4-b83c-22b9239e4da0}</Project>
       <Name>CredentialManagement</Name>
@@ -262,6 +273,12 @@
       <Project>{4a84e568-ca86-4510-8cd0-90d3ef9b65f9}</Project>
       <Name>Rothko</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
